@@ -6,7 +6,8 @@ public class Usuario {
     private String nombre;
     private String email;
     private String passwordHash;
-    private Integer rolId;
+    // El rol se asigna al crear la cuenta y se conserva durante toda su existencia.
+    private final Integer rolId;
     private Integer empresaId;
     private boolean estaActivo;
 
@@ -70,10 +71,6 @@ public class Usuario {
         return rolId;
     }
 
-    public void setRolId(Integer rolId) {
-        this.rolId = validarRolId(rolId);
-    }
-
     public Integer getEmpresaId() {
         return empresaId;
     }
@@ -120,7 +117,7 @@ public class Usuario {
         return email;
     }
 
-    // Se recibe el hash ya calculado; su generación se implementará aparte.
+    // Se recibe el hash que ya calculó el servicio de contraseñas.
     private String validarPasswordHash(String passwordHash) {
         if (passwordHash == null || passwordHash.isBlank()) { // blank utiliza para saber si el texto esta vacio o contiene espacios en blanco. 
             throw new IllegalArgumentException(

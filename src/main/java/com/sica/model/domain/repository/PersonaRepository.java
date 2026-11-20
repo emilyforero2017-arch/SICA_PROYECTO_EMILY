@@ -10,7 +10,13 @@ public interface PersonaRepository {
 
     Optional<Persona> buscarPorId(Integer id);
 
+    // Mantiene protegido el registro mientras se comprueban y guardan sus cambios.
+    Optional<Persona> buscarPorIdParaActualizar(Integer id);
+
     Optional<Persona> buscarPorDocumento(String documentoIdentidad);
+
+    // Protege a la persona durante el ingreso para evitar dos entradas simultáneas.
+    Optional<Persona> buscarPorDocumentoParaActualizar(String documentoIdentidad);
 
     List<Persona> listar();
 

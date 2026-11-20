@@ -11,6 +11,9 @@ public interface VisitaRepository {
 
     Optional<Visita> buscarPorId(Integer id);
 
+    // Permite comprobar y registrar el ingreso sin que otra operación cambie la visita a la vez.
+    Optional<Visita> buscarPorIdParaActualizar(Integer id);
+
     List<Visita> listarPorPersona(Integer personaId);
 
     List<Visita> listarPorFuncionarioDestinatario(Integer funcionarioId);
@@ -20,8 +23,15 @@ public interface VisitaRepository {
     // Incluye entradas desde esa fecha, sin incluir la fecha hasta.
     List<Visita> listarPorFechaEntrada(LocalDateTime desde, LocalDateTime hasta);
 
+    // Devuelve cada visita una sola vez si su entrada, salida real o cierre ocurrió en el período.
+    // Incluye desde y excluye hasta, aunque la entrada haya ocurrido antes del período consultado.
+    List<Visita> listarPorMovimientosEnPeriodo(LocalDateTime desde, LocalDateTime hasta);
+
     // Un ingreso abierto tiene entrada, pero no salida ni cierre del sistema.
     Optional<Visita> buscarIngresoAbiertoPorPersona(Integer personaId);
+
+    // Lee el ingreso abierto más reciente mientras la persona está protegida para actualizar.
+    Optional<Visita> buscarIngresoAbiertoPorPersonaParaActualizar(Integer personaId);
 
     List<Visita> listarIngresosAbiertos();
 

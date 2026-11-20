@@ -4,6 +4,7 @@ public class Empresa {
     private Integer id;
     private String nombre;
     private String contactoPrincipal;
+    private boolean estaActiva;
 
     public Empresa(String nombre, String contactoPrincipal) {
         this(null, nombre, contactoPrincipal);
@@ -14,9 +15,20 @@ public class Empresa {
             String nombre,
             String contactoPrincipal) {
 
+        this(id, nombre, contactoPrincipal, true);
+    }
+
+    // Permite recuperar de la base de datos tanto empresas activas como desactivadas.
+    public Empresa(
+            Integer id,
+            String nombre,
+            String contactoPrincipal,
+            boolean estaActiva) {
+
         this.id = id;
         this.nombre = validarNombre(nombre);
         this.contactoPrincipal = validarContactoPrincipal(contactoPrincipal);
+        this.estaActiva = estaActiva;
     }
 
     public Integer getId() {
@@ -37,6 +49,15 @@ public class Empresa {
 
     public void setContactoPrincipal(String contactoPrincipal) {
         this.contactoPrincipal = validarContactoPrincipal(contactoPrincipal);
+    }
+
+    public boolean isEstaActiva() {
+        return estaActiva;
+    }
+
+    // Retira la empresa del funcionamiento sin borrar su identificador ni sus datos.
+    public void desactivar() {
+        estaActiva = false;
     }
 
     // nombre no se encuentre vacio y no supere los 100 caracteres 

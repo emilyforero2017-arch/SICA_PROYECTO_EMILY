@@ -128,6 +128,9 @@ INSERT INTO permisos (nombre_permiso, descripcion) VALUES
 ('actualizar_empresa',
  'Actualizar los datos de una empresa.'),
 
+('desactivar_empresa',
+ 'Retirar una empresa del funcionamiento conservando sus datos e historial.'),
+
 ('consultar_usuarios',
  'Consultar las cuentas de usuario para administrarlas.'),
 
@@ -137,14 +140,8 @@ INSERT INTO permisos (nombre_permiso, descripcion) VALUES
 ('actualizar_usuario',
  'Actualizar los datos de una cuenta de usuario.'),
 
-('activar_usuario',
- 'Habilitar una cuenta de usuario.'),
-
 ('desactivar_usuario',
  'Deshabilitar una cuenta conservando su historial.'),
-
-('asignar_rol_usuario',
- 'Asignar un rol a una cuenta de usuario.'),
 
 ('consultar_roles_permisos',
  'Consultar los roles y permisos para administrarlos.'),
@@ -229,21 +226,20 @@ WHERE r.nombre_rol = 'Superusuario'
       'consultar_empresas',
       'registrar_empresa',
       'actualizar_empresa',
+      'desactivar_empresa',
       'consultar_usuarios',
       'crear_usuario',
       'actualizar_usuario',
-      'activar_usuario',
       'desactivar_usuario',
-      'asignar_rol_usuario',
       'consultar_roles_permisos',
       'asignar_permiso_rol',
       'retirar_permiso_rol'
   );
 
 
-INSERT INTO empresas (id, nombre, contacto_principal) VALUES
-(1, 'Empresa Sol', 'Ana Gómez'),
-(2, 'Empresa Luna', 'Marta Rojas');
+INSERT INTO empresas (id, nombre, contacto_principal, esta_activa) VALUES
+(1, 'Empresa Sol', 'Ana Gómez', TRUE),
+(2, 'Empresa Luna', 'Marta Rojas', TRUE);
 
 
 -- Contraseña de las cinco cuentas de demostración:

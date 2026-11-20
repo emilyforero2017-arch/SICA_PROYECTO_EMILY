@@ -54,9 +54,13 @@ CREATE TABLE empresas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     contacto_principal VARCHAR(100),
+    esta_activa BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT ck_empresas_nombre
-        CHECK (CHAR_LENGTH(TRIM(nombre)) > 0)
+        CHECK (CHAR_LENGTH(TRIM(nombre)) > 0),
+
+    CONSTRAINT ck_empresas_activa
+        CHECK (esta_activa IN (0, 1))
 ) ENGINE=InnoDB;
 
 
