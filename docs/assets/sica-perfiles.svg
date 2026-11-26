@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="224" viewBox="0 0 1200 224" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Cuatro perfiles, un mismo control de acceso</title>
+  <desc id="desc">Guarda: atiende portería. Funcionario: autoriza y organiza. Supervisor: revisa la seguridad. Superusuario: administra el sistema.</desc>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="1" y="1" width="284" height="222" rx="24" fill="#EAF2E5" stroke="#DCE7D7"/>
+    <rect x="306" y="1" width="284" height="222" rx="24" fill="#E2F0EE" stroke="#CFE2DF"/>
+    <rect x="611" y="1" width="284" height="222" rx="24" fill="#EFF4E7" stroke="#DFE7D3"/>
+    <rect x="916" y="1" width="283" height="222" rx="24" fill="#115D5D" stroke="#115D5D"/>
+    <g stroke="#115D5D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M41 33L56 39V50C56 60 48 66 41 70C34 66 26 60 26 50V39L41 33Z"/>
+      <path d="M34 50L39 55L49 44"/>
+      <rect x="332" y="34" width="29" height="35" rx="3"/>
+      <path d="M340 42H342M351 42H353M340 50H342M351 50H353M344 69V59H350V69"/>
+      <path d="M636 51C646 35 661 35 671 51C661 67 646 67 636 51Z"/>
+      <circle cx="653.5" cy="51" r="6"/>
+    </g>
+    <g stroke="#C3E89F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="951" cy="45" r="11"/>
+      <path d="M959 53L975 69M968 62L974 56M972 66L978 60"/>
+    </g>
+    <g font-size="11" font-weight="700" letter-spacing="2">
+      <text x="235" y="48" fill="#66756B">01</text>
+      <text x="540" y="48" fill="#66756B">02</text>
+      <text x="845" y="48" fill="#66756B">03</text>
+      <text x="1148" y="48" fill="#B2D8D8">04</text>
+    </g>
+    <g font-size="23" font-weight="700">
+      <text x="25" y="111" fill="#18231B">Guarda</text>
+      <text x="330" y="111" fill="#18231B">Funcionario</text>
+      <text x="635" y="111" fill="#18231B">Supervisor</text>
+      <text x="940" y="111" fill="#FFFFFF">Superusuario</text>
+    </g>
+    <g font-size="15" fill="#526358">
+      <text x="25" y="148">Atiende portería.</text>
+      <text x="25" y="174">Registra entradas y salidas.</text>
+      <text x="330" y="148">Autoriza y organiza.</text>
+      <text x="330" y="174">Gestiona visitas y personal.</text>
+      <text x="635" y="148">Revisa la seguridad.</text>
+      <text x="635" y="174">Controla novedades y accesos.</text>
+    </g>
+    <g font-size="15" fill="#D7EAE3">
+      <text x="940" y="148">Administra el sistema.</text>
+      <text x="940" y="174">Gestiona cuentas y permisos.</text>
+    </g>
+  </g>
+</svg>
