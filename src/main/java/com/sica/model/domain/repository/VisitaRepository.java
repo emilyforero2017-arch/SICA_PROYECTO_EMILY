@@ -16,6 +16,8 @@ public interface VisitaRepository {
 
     List<Visita> listarPorPersona(Integer personaId);
 
+    List<SolicitudEnPorteria> listarSolicitudesEnviadas(Integer guardaId);
+
     List<Visita> listarPorFuncionarioDestinatario(Integer funcionarioId);
 
     List<Visita> listarPorEstado(Integer estadoVisitaId);
@@ -29,6 +31,14 @@ public interface VisitaRepository {
 
     // Un ingreso abierto tiene entrada, pero no salida ni cierre del sistema.
     Optional<Visita> buscarIngresoAbiertoPorPersona(Integer personaId);
+
+    List<VisitaPrevista> listarVisitasPrevistas(LocalDateTime desde, LocalDateTime hasta);
+
+    List<MovimientoPorteria> listarMovimientosPorteria(Integer guardaId, LocalDateTime desde,
+            LocalDateTime hasta, MovimientoPorteria.Tipo tipo);
+
+    // Los movimientos son del período. Las solicitudes siguen contando mientras esperen respuesta.
+    ResumenPorteria resumirPorteria(Integer guardaId, LocalDateTime desde, LocalDateTime hasta);
 
     // Lee el ingreso abierto más reciente mientras la persona está protegida para actualizar.
     Optional<Visita> buscarIngresoAbiertoPorPersonaParaActualizar(Integer personaId);

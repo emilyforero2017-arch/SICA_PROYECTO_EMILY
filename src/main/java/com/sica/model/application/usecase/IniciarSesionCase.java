@@ -1,5 +1,7 @@
 package com.sica.model.application.usecase;
 
+import com.sica.model.domain.policy.ValidadorCorreo;
+
 import com.sica.model.application.port.FabricarRepositorios;
 import com.sica.model.application.port.GestorTransacciones;
 import com.sica.model.application.port.ServicioContrasenas;
@@ -40,9 +42,7 @@ public class IniciarSesionCase {
     }
 
     public SesionUsuario iniciar(String email, char[] contrasena) {
-        if (email == null || email.isBlank() || email.length() > 100) {
-            throw new IllegalArgumentException("El correo es obligatorio y admite hasta 100 caracteres.");
-        }
+        ValidadorCorreo.validar(email);
         if (contrasena == null || contrasena.length == 0) {
             throw new IllegalArgumentException("La contraseña es obligatoria.");
         }
@@ -110,7 +110,8 @@ public class IniciarSesionCase {
         }
 
         LocalDateTime ahora = LocalDateTime.now(reloj);
-        SesionUsuario sesion = new SesionUsuario(usuario, rol, ahora);
+        byte[] fotoPerfil = repositorios.crearUsuarioRepository().buscarFotoPerfil(usuario.getId()).orElse(null);
+        SesionUsuario sesion = new SesionUsuario(usuario, rol, ahora, fotoPerfil, empresa == null ? null : empresa.getNombre());
         auditar(repositorios, usuario, email, "LOGIN_EXITOSO", "Cuenta y credenciales comprobadas.", ahora);
         return Optional.of(sesion);
     }

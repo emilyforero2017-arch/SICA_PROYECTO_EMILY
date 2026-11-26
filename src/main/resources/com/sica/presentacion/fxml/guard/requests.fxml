@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" spacing="18" minWidth="0" maxWidth="Infinity" styleClass="module-layout">
+    <children>
+        <VBox fx:id="filterSlot" spacing="14" minWidth="0" maxWidth="Infinity"/>
+        <VBox fx:id="requestsSlot" spacing="14" minWidth="0" maxWidth="Infinity"/>
+    </children>
+</VBox>

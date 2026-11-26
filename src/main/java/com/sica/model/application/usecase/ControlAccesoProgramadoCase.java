@@ -3,6 +3,7 @@ package com.sica.model.application.usecase;
 import com.sica.model.application.port.FabricarRepositorios;
 import com.sica.model.domain.entity.BitacoraAuditoria;
 import com.sica.model.domain.entity.Empresa;
+import com.sica.model.domain.entity.FotoPersona;
 import com.sica.model.domain.entity.Persona;
 import com.sica.model.domain.entity.TipoIngreso;
 import com.sica.model.domain.entity.Usuario;
@@ -80,7 +81,9 @@ public class ControlAccesoProgramadoCase {
                     .toList();
 
             // El guarda recibe identidad, foto, anfitrión y horario con una sola consulta.
-            return Optional.of(new ConsultaIngresoProgramado(persona, estadoAcceso, citas));
+            byte[] fotoArchivo = FotoPersona.ARCHIVO_GUARDADO.equals(persona.getUrlFoto())
+                    ? repositorios.crearPersonaRepository().buscarFotoArchivo(persona.getId()).orElse(null) : null;
+            return Optional.of(new ConsultaIngresoProgramado(persona, estadoAcceso, citas, fotoArchivo));
         });
     }
 

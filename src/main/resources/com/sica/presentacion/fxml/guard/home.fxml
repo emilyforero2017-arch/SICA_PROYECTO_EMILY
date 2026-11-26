@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+<GridPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" hgap="18" vgap="18" maxWidth="Infinity" styleClass="bento">
+    <columnConstraints>
+        <ColumnConstraints percentWidth="59" hgrow="ALWAYS" minWidth="0" fillWidth="true"/>
+        <ColumnConstraints percentWidth="41" hgrow="ALWAYS" minWidth="0" fillWidth="true"/>
+    </columnConstraints>
+    <children>
+        <VBox fx:id="entrySlot" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" spacing="18" minWidth="0" fillWidth="true"/>
+        <VBox fx:id="requestSlot" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" spacing="18" minWidth="0" fillWidth="true"/>
+        <VBox fx:id="chartSlot" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="1" spacing="18" minWidth="0" fillWidth="true"/>
+        <VBox fx:id="operationsSlot" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" spacing="18" minWidth="0" fillWidth="true"/>
+        <VBox fx:id="movementsSlot" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="1" spacing="18" minWidth="0" fillWidth="true"/>
+        <VBox fx:id="profileSlot" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" spacing="18" minWidth="0" fillWidth="true"/>
+    </children>
+</GridPane>

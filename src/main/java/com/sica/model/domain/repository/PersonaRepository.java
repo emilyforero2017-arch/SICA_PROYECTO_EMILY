@@ -15,6 +15,8 @@ public interface PersonaRepository {
 
     Optional<Persona> buscarPorDocumento(String documentoIdentidad);
 
+    default Optional<byte[]> buscarFotoArchivo(Integer id) { return Optional.empty(); }
+
     // Protege a la persona durante el ingreso para evitar dos entradas simultáneas.
     Optional<Persona> buscarPorDocumentoParaActualizar(String documentoIdentidad);
 

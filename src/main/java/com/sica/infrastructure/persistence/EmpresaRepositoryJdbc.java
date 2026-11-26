@@ -27,10 +27,11 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
 
     @Override
     public Empresa guardar(Empresa empresa) {
+        byte[] logo = empresa.getLogo();
         String sql = """
-                INSERT INTO empresas (nombre, contacto_principal, esta_activa)
-                VALUES (?, ?, ?)
-                """;
+                INSERT INTO empresas (nombre, contacto_principal, esta_activa%s)
+                VALUES (?, ?, ?%s)
+                """.formatted(logo == null ? "" : ", logo", logo == null ? "" : ", ?");
 
         try (PreparedStatement consulta = conexion.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -39,6 +40,7 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
             consulta.setString(1, empresa.getNombre());
             consulta.setString(2, empresa.getContactoPrincipal());
             consulta.setBoolean(3, empresa.isEstaActiva());
+            if (logo != null) consulta.setBytes(4, logo);
 
             if (consulta.executeUpdate() != 1) {
                 throw new SQLException("No se guardó la empresa esperada.");
@@ -55,9 +57,10 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
                         identificadores.getInt(1),
                         empresa.getNombre(),
                         empresa.getContactoPrincipal(),
-                        empresa.isEstaActiva());
+                        empresa.isEstaActiva(), logo);
             }
         } catch (SQLException error) {
+            verificarColumnaLogo(logo, error);
             throw new IllegalStateException("No se pudo guardar la empresa.", error);
         }
     }
@@ -104,16 +107,30 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
 
     @Override
     public List<Empresa> listar() {
-        return consultarLista(false);
+        try {
+            return consultarLista(false, true);
+        } catch (SQLException error) {
+            // Una instalación anterior sigue mostrando sus empresas mientras se habilita la columna.
+            if (error.getErrorCode() == 1054) return listarSinLogos(false);
+            throw new IllegalStateException("No se pudieron listar las empresas.", error);
+        }
     }
 
     @Override
     public List<Empresa> listarActivas() {
-        return consultarLista(true);
+        return listarSinLogos(true);
     }
 
-    private List<Empresa> consultarLista(boolean soloActivas) {
-        String sql = "SELECT " + COLUMNAS + " FROM empresas";
+    private List<Empresa> listarSinLogos(boolean soloActivas) {
+        try {
+            return consultarLista(soloActivas, false);
+        } catch (SQLException error) {
+            throw new IllegalStateException("No se pudieron listar las empresas.", error);
+        }
+    }
+
+    private List<Empresa> consultarLista(boolean soloActivas, boolean incluirLogo) throws SQLException {
+        String sql = "SELECT " + COLUMNAS + (incluirLogo ? ", logo" : "") + " FROM empresas";
         if (soloActivas) {
             sql += " WHERE esta_activa = TRUE";
         }
@@ -125,22 +142,21 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
              ResultSet resultado = consulta.executeQuery()) {
 
             while (resultado.next()) {
-                empresas.add(leerEmpresa(resultado));
+                empresas.add(leerEmpresa(resultado, incluirLogo ? resultado.getBytes("logo") : null));
             }
             return empresas;
-        } catch (SQLException error) {
-            throw new IllegalStateException("No se pudieron listar las empresas.", error);
         }
     }
 
     @Override
     public boolean actualizar(Empresa empresa) {
+        byte[] logo = empresa.getLogo();
         // Actualizar los datos conserva el estado que la empresa tiene en MySQL.
         String sql = """
                 UPDATE empresas
-                SET nombre = ?, contacto_principal = ?
+                SET nombre = ?, contacto_principal = ?%s
                 WHERE id = ?
-                """;
+                """.formatted(logo == null ? "" : ", logo = ?");
 
         Objects.requireNonNull(
                 empresa.getId(), "El identificador de la empresa es obligatorio.");
@@ -148,11 +164,19 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
             consulta.setString(1, empresa.getNombre());
             consulta.setString(2, empresa.getContactoPrincipal());
-            consulta.setInt(3, empresa.getId());
+            if (logo != null) consulta.setBytes(3, logo);
+            consulta.setInt(logo == null ? 3 : 4, empresa.getId());
 
             return consulta.executeUpdate() == 1;
         } catch (SQLException error) {
+            verificarColumnaLogo(logo, error);
             throw new IllegalStateException("No se pudo actualizar la empresa.", error);
+        }
+    }
+
+    private static void verificarColumnaLogo(byte[] logo, SQLException error) {
+        if (logo != null && error.getErrorCode() == 1054) {
+            throw new IllegalStateException("La base de datos aún no tiene habilitada la carga de logos.", error);
         }
     }
 
@@ -176,10 +200,14 @@ public final class EmpresaRepositoryJdbc implements EmpresaRepository {
 
     // Convierte una fila de MySQL en el objeto Empresa que usan los casos de uso.
     private Empresa leerEmpresa(ResultSet resultado) throws SQLException {
+        return leerEmpresa(resultado, null);
+    }
+
+    private Empresa leerEmpresa(ResultSet resultado, byte[] logo) throws SQLException {
         return new Empresa(
                 resultado.getInt("id"),
                 resultado.getString("nombre"),
                 resultado.getString("contacto_principal"),
-                resultado.getBoolean("esta_activa"));
+                resultado.getBoolean("esta_activa"), logo);
     }
 }

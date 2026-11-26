@@ -112,7 +112,7 @@ public class Persona {
         this.vinculacionLaboralActiva = vinculacionLaboralActiva;
     }
 
-    private String validarNombre(String nombre) {
+    public static String validarNombre(String nombre) {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException(
                     "El nombre de la persona es obligatorio.");
@@ -126,7 +126,7 @@ public class Persona {
         return nombre;
     }
 
-    private String validarDocumentoIdentidad(String documentoIdentidad) {
+    public static String validarDocumentoIdentidad(String documentoIdentidad) {
         if (documentoIdentidad == null || documentoIdentidad.isBlank()) {
             throw new IllegalArgumentException(
                     "El documento de identidad es obligatorio.");
@@ -149,12 +149,16 @@ public class Persona {
         return estadoAccesoId;
     }
 
-    private String validarUrlFoto(String urlFoto) {
+    public static String validarUrlFoto(String urlFoto) {
         if (urlFoto == null || urlFoto.isBlank()) {
             throw new IllegalArgumentException(
-                    "La dirección de la fotografía es obligatoria.");
+                    "La foto es obligatoria.");
         }
 
+        if (FotoPersona.esCarga(urlFoto)) {
+            FotoPersona.decodificar(urlFoto);
+            return urlFoto;
+        }
         if (urlFoto.length() > 255) {
             throw new IllegalArgumentException(
                     "La dirección de la fotografía admite hasta 255 caracteres.");

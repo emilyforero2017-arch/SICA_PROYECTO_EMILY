@@ -9,7 +9,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -30,14 +34,37 @@ public final class UsuarioRepositoryJdbc implements UsuarioRepository {
     }
 
     @Override
+    public Map<Integer, String> buscarNombresPorIds(Set<Integer> ids) {
+        List<Integer> pendientes = List.copyOf(ids);
+        Map<Integer, String> nombres = new HashMap<>();
+        // Limitamos el número de parámetros por consulta para historiales extensos.
+        int tamanoLote = 500;
+        for (int inicio = 0; inicio < pendientes.size(); inicio += tamanoLote) {
+            List<Integer> lote = pendientes.subList(inicio, Math.min(inicio + tamanoLote, pendientes.size()));
+            String parametros = String.join(", ", Collections.nCopies(lote.size(), "?"));
+            String sql = "SELECT id, nombre FROM usuarios WHERE id IN (" + parametros + ")";
+            try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+                for (int i = 0; i < lote.size(); i++) consulta.setInt(i + 1, lote.get(i));
+                try (ResultSet filas = consulta.executeQuery()) {
+                    while (filas.next()) nombres.put(filas.getInt("id"), filas.getString("nombre"));
+                }
+            } catch (SQLException error) {
+                throw new IllegalStateException("No fue posible consultar los responsables de la auditoría.", error);
+            }
+        }
+        return nombres;
+    }
+
+    @Override
     public Usuario guardar(Usuario usuario) {
         Objects.requireNonNull(usuario, "Los datos del usuario son obligatorios.");
 
+        byte[] foto = usuario.getFotoPerfil();
         String sql = """
                 INSERT INTO usuarios
-                    (nombre, email, password_hash, rol_id, empresa_id, esta_activo)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """;
+                    (nombre, email, password_hash, rol_id, empresa_id, esta_activo%s)
+                VALUES (?, ?, ?, ?, ?, ?%s)
+                """.formatted(foto == null ? "" : ", foto_perfil", foto == null ? "" : ", ?");
 
         try (PreparedStatement consulta = conexion.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -48,6 +75,7 @@ public final class UsuarioRepositoryJdbc implements UsuarioRepository {
             consulta.setInt(4, usuario.getRolId());
             consulta.setObject(5, usuario.getEmpresaId(), Types.INTEGER);
             consulta.setBoolean(6, usuario.isEstaActivo());
+            if (foto != null) consulta.setBytes(7, foto);
 
             if (consulta.executeUpdate() != 1) {
                 throw new SQLException("No se guardó el usuario esperado.");
@@ -62,9 +90,10 @@ public final class UsuarioRepositoryJdbc implements UsuarioRepository {
                 return new Usuario(
                         identificadores.getInt(1),
                         usuario.getNombre(), usuario.getEmail(), usuario.getPasswordHash(),
-                        usuario.getRolId(), usuario.getEmpresaId(), usuario.isEstaActivo());
+                        usuario.getRolId(), usuario.getEmpresaId(), usuario.isEstaActivo(), foto);
             }
         } catch (SQLException error) {
+            verificarColumnaFoto(foto, error);
             throw new IllegalStateException("No se pudo guardar el usuario.", error);
         }
     }
@@ -85,6 +114,19 @@ public final class UsuarioRepositoryJdbc implements UsuarioRepository {
     public Optional<Usuario> buscarPorEmail(String email) {
         Objects.requireNonNull(email, "El correo del usuario es obligatorio.");
         return buscar(CONSULTA_USUARIOS + " WHERE u.email = ?", email, false);
+    }
+
+    @Override
+    public Optional<byte[]> buscarFotoPerfil(Integer id) {
+        try (PreparedStatement consulta = conexion.prepareStatement("SELECT foto_perfil FROM usuarios WHERE id = ?")) {
+            consulta.setInt(1, id);
+            try (ResultSet filas = consulta.executeQuery()) {
+                return filas.next() ? Optional.ofNullable(filas.getBytes(1)) : Optional.empty();
+            }
+        } catch (SQLException error) {
+            if (error.getErrorCode() == 1054) return Optional.empty();
+            throw new IllegalStateException("No se pudo consultar la foto de perfil.", error);
+        }
     }
 
     private Optional<Usuario> buscar(String sql, Object valor, boolean proteger) {
@@ -163,18 +205,26 @@ public final class UsuarioRepositoryJdbc implements UsuarioRepository {
         Objects.requireNonNull(usuario, "Los datos del usuario son obligatorios.");
         Objects.requireNonNull(usuario.getId(), "El identificador del usuario es obligatorio.");
 
-        // Solo se cambian nombre y correo; los demás datos mantienen su valor guardado.
+        byte[] foto = usuario.getFotoPerfil();
         String sql = """
-                UPDATE usuarios SET nombre = ?, email = ? WHERE id = ?
-                """;
+                UPDATE usuarios SET nombre = ?, email = ?%s WHERE id = ?
+                """.formatted(foto == null ? "" : ", foto_perfil = ?");
 
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
             consulta.setString(1, usuario.getNombre());
             consulta.setString(2, usuario.getEmail());
-            consulta.setInt(3, usuario.getId());
+            if (foto != null) consulta.setBytes(3, foto);
+            consulta.setInt(foto == null ? 3 : 4, usuario.getId());
             return consulta.executeUpdate() == 1;
         } catch (SQLException error) {
+            verificarColumnaFoto(foto, error);
             throw new IllegalStateException("No se pudo actualizar el usuario.", error);
+        }
+    }
+
+    private static void verificarColumnaFoto(byte[] foto, SQLException error) {
+        if (foto != null && error.getErrorCode() == 1054) {
+            throw new IllegalStateException("La base de datos aún no tiene habilitadas las fotos de perfil.", error);
         }
     }
 

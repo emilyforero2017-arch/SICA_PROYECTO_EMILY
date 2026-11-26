@@ -2,16 +2,16 @@ package com.sica.model.application.usecase;
 
 import com.sica.model.application.port.FabricarRepositorios;
 import com.sica.model.domain.entity.BitacoraAuditoria;
-import com.sica.model.domain.entity.Usuario;
 import com.sica.model.domain.entity.Visita;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 // Consulta la bitácora general o la actividad que corresponde al funcionario que actúa.
 public class AuditoriaCase {
@@ -77,7 +77,10 @@ public class AuditoriaCase {
 
     private List<DetalleAuditoria> preparar(
             FabricarRepositorios repositorios, Collection<BitacoraAuditoria> registros) {
-        Map<Integer, String> nombres = new HashMap<>();
+        Set<Integer> responsables = registros.stream().map(BitacoraAuditoria::getUsuarioId)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Integer, String> nombres = responsables.isEmpty() ? Map.of()
+                : repositorios.crearUsuarioRepository().buscarNombresPorIds(responsables);
         // Stream ordena la colección y convierte cada registro en un resultado para consultar.
         return registros.stream()
                 .sorted(Comparator.comparing(BitacoraAuditoria::getFechaHora, Comparator.reverseOrder())
@@ -85,8 +88,7 @@ public class AuditoriaCase {
                 .map(registro -> {
                     // Un usuario nulo puede representar al sistema o un login que no identificó una cuenta.
                     String nombre = registro.getUsuarioId() == null ? "Sin usuario asociado"
-                            : nombres.computeIfAbsent(registro.getUsuarioId(), id -> repositorios.crearUsuarioRepository()
-                                    .buscarPorId(id).map(Usuario::getNombre).orElse("Cuenta no disponible"));
+                            : nombres.getOrDefault(registro.getUsuarioId(), "Cuenta no disponible");
                     return new DetalleAuditoria(registro, nombre);
                 }).toList();
     }

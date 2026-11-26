@@ -54,6 +54,7 @@ CREATE TABLE empresas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     contacto_principal VARCHAR(100),
+    logo MEDIUMBLOB,
     esta_activa BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT ck_empresas_nombre
@@ -69,6 +70,7 @@ CREATE TABLE usuarios (
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    foto_perfil MEDIUMBLOB,
     rol_id INT NOT NULL,
     empresa_id INT,
     esta_activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -125,6 +127,7 @@ CREATE TABLE personas (
     tipo_persona ENUM('Trabajador', 'Invitado') NOT NULL,
     estado_acceso_id INT NOT NULL DEFAULT 1,
     url_foto VARCHAR(255) NOT NULL,
+    foto_archivo MEDIUMBLOB,
     vinculacion_laboral_activa BOOLEAN,
 
     CONSTRAINT fk_personas_empresa

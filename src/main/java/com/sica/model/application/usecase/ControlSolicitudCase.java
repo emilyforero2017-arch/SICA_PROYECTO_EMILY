@@ -12,9 +12,11 @@ import com.sica.model.domain.entity.Visita;
 import com.sica.model.domain.policy.HorarioIngreso;
 import com.sica.model.domain.policy.HorarioCarnetOlvidado;
 import com.sica.model.domain.policy.HorarioVisitaNoAnunciada;
+import com.sica.model.domain.repository.SolicitudEnPorteria;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,6 +34,33 @@ public class ControlSolicitudCase {
         this.ejecutor = Objects.requireNonNull(ejecutor);
         this.reloj = Objects.requireNonNull(reloj);
     }
+
+    public List<RespuestaEnPorteria> listarRespuestas(Integer guardaId) {
+        return ejecutor.ejecutarConPermisos(guardaId,
+                List.of("consultar_visita_porteria", "consultar_persona_porteria"), (repositorios, guarda) -> {
+                    List<SolicitudEnPorteria> solicitudes = repositorios.crearVisitaRepository().listarSolicitudesEnviadas(guarda.getId());
+                    LocalDateTime ahora = LocalDateTime.now(reloj);
+                    return solicitudes.stream()
+                            .map(solicitud -> resumirRespuesta(solicitud, ahora))
+                            .toList();
+                });
+    }
+
+    private RespuestaEnPorteria resumirRespuesta(SolicitudEnPorteria fila, LocalDateTime ahora) {
+        Visita visita = fila.visita();
+        String estado = fila.estado();
+        HorarioIngreso horario = "Aprobado".equals(estado) ? horarioAutorizado(visita) : null;
+        if (horario != null && ahora.isAfter(horario.getHasta())) {
+            estado = "Expirado";
+        }
+        return new RespuestaEnPorteria(visita.getId(), fila.persona(), fila.documento(), fila.empresa(),
+                fila.funcionario(), estado, horario == null ? null : horario.getHasta(),
+                horario != null && horario.contiene(ahora), visita.getTipoIngreso(), visita.getFechaAprobacion());
+    }
+
+    public record RespuestaEnPorteria(int id, String persona, String documento, String empresa,
+            String funcionario, String estado, LocalDateTime hasta, boolean enHorario,
+            TipoIngreso tipo, LocalDateTime aprobacion) { }
 
     public ResultadoSolicitudPorteria consultarResultado(Integer guardaId, Integer solicitudId) {
         if (solicitudId == null) {
@@ -152,11 +181,8 @@ public class ControlSolicitudCase {
         String estadoAcceso = repositorios.crearEstadoAccesoPersonaRepository().buscarPorId(persona.getEstadoAccesoId())
                 .orElseThrow(() -> new IllegalStateException("El estado de acceso de la persona no está configurado.")).getNombreEstado();
         LocalDateTime ahora = LocalDateTime.now(reloj);
-        HorarioIngreso horario = null;
-        if (solicitud.getFechaAprobacion() != null && solicitud.getAprobadaPorId() != null) {
-            // Cada tipo utiliza su propio horario; el pase por olvido termina como máximo al finalizar el día.
-            horario = solicitud.getTipoIngreso() == TipoIngreso.TRABAJADOR_CON_CARNET_OLVIDADO
-                    ? new HorarioCarnetOlvidado().calcular(solicitud) : new HorarioVisitaNoAnunciada().calcular(solicitud);
+        HorarioIngreso horario = horarioAutorizado(solicitud);
+        if (horario != null) {
             VencimientoVisitasCase.expirarSiCorresponde(repositorios, solicitud, ahora, intento);
         }
         EstadoVisita estado = repositorios.crearEstadoVisitaRepository().buscarPorId(solicitud.getEstadoVisitaId())
@@ -164,6 +190,15 @@ public class ControlSolicitudCase {
         String impedimento = impedimento(solicitud, persona, estado, estadoAcceso, empresa, funcionario, rol, horario, ahora);
         return new ResultadoSolicitudPorteria(solicitud, persona, estado, empresa.getNombre(), funcionario.getNombre(),
                 horario, impedimento == null, impedimento == null ? "Aprobada y vigente. Puede confirmar la entrada." : impedimento);
+    }
+
+    private HorarioIngreso horarioAutorizado(Visita solicitud) {
+        if (solicitud.getFechaAprobacion() == null || solicitud.getAprobadaPorId() == null) {
+            return null;
+        }
+        // El pase por carné olvidado termina, como máximo, al finalizar el día de aprobación.
+        return solicitud.getTipoIngreso() == TipoIngreso.TRABAJADOR_CON_CARNET_OLVIDADO
+                ? new HorarioCarnetOlvidado().calcular(solicitud) : new HorarioVisitaNoAnunciada().calcular(solicitud);
     }
 
     private boolean esSolicitud(TipoIngreso tipo) {

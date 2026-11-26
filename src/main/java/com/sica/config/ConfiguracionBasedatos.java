@@ -1,56 +1,21 @@
 package com.sica.config;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Properties;
-import java.util.Set;
 
 
 public class ConfiguracionBasedatos {
 
-    private static final Set<String> CONTRASENAS_LOCALES = Set.of(
-            "db.password", "db.trustCertificateKeyStorePassword");
-    // Conserva las opciones leídas del archivo.
     private final Properties configuracion = new Properties();
 
     public ConfiguracionBasedatos() {
-        // Busca config.properties dentro de los recursos del proyecto.
-        try (InputStream archivo = ConfiguracionBasedatos.class
-                .getResourceAsStream("/config.properties")) {
-
-            if (archivo == null) {
-                throw new IllegalStateException(
-                        "No se encontró el archivo config.properties.");
-            }
-
-            configuracion.load(
-                    new InputStreamReader(archivo, StandardCharsets.UTF_8));
-
+        try (var archivo = ConfiguracionBasedatos.class.getResourceAsStream("/config.properties")) {
+            if (archivo == null) throw new IllegalStateException("No se encontró config.properties.");
+            configuracion.load(new InputStreamReader(archivo, StandardCharsets.UTF_8));
         } catch (IOException error) {
-            throw new IllegalStateException(
-                    "No se pudo leer la configuración de la base de datos.",
-                    error);
-        }
-        cargarContrasenasLocales();
-    }
-
-    // Las contraseñas permanecen en este computador; el resto de la configuración sigue en Git.
-    private void cargarContrasenasLocales() {
-        Path archivo = Path.of(System.getProperty("user.home"), ".sica", "config-local.properties");
-        if (!Files.exists(archivo)) return;
-
-        Properties locales = new Properties();
-        try (var lector = Files.newBufferedReader(archivo, StandardCharsets.UTF_8)) {
-            locales.load(lector);
-            for (String clave : CONTRASENAS_LOCALES) {
-                if (locales.containsKey(clave)) configuracion.setProperty(clave, locales.getProperty(clave));
-            }
-        } catch (IOException error) {
-            throw new IllegalStateException("No se pudieron leer las contraseñas locales de SICA.", error);
+            throw new IllegalStateException("No se pudo leer config.properties.", error);
         }
     }
 
@@ -63,22 +28,16 @@ public class ConfiguracionBasedatos {
     public Properties obtenerPropiedadesConexion() {
         Properties propiedades = new Properties();
 
-        String[] opciones = {
-            "user",
-            "password",
-            "sslMode",
-            "trustCertificateKeyStoreUrl",
-            "trustCertificateKeyStoreType",
-            "trustCertificateKeyStorePassword",
-            "connectionTimeZone",
-            "forceConnectionTimeZoneToSession"
-        };
+        propiedades.setProperty("user", leerObligatoria("db.user"));
+        propiedades.setProperty("password", leerObligatoria("db.password"));
+        propiedades.setProperty("sslMode", configuracion.getProperty("db.sslMode", "REQUIRED"));
+        propiedades.setProperty("connectionTimeZone", configuracion.getProperty("db.connectionTimeZone", "-05:00"));
+        propiedades.setProperty("forceConnectionTimeZoneToSession",
+                configuracion.getProperty("db.forceConnectionTimeZoneToSession", "true"));
 
-        for (String opcion : opciones) {
-            propiedades.setProperty(
-                    opcion,
-                    leerObligatoria("db." + opcion));
-        }
+        // Limita cuánto espera la aplicación si MySQL no responde.
+        propiedades.setProperty("connectTimeout", configuracion.getProperty("db.connectTimeout", "10000"));
+        propiedades.setProperty("socketTimeout", configuracion.getProperty("db.socketTimeout", "20000"));
 
         return propiedades;
     }
@@ -89,9 +48,7 @@ public class ConfiguracionBasedatos {
 
         if (valor == null || valor.isBlank()) {
             throw new IllegalStateException(
-                    "Falta configurar la opción: " + clave
-                    + (CONTRASENAS_LOCALES.contains(clave)
-                            ? " en ~/.sica/config-local.properties." : ""));
+                    "Falta configurar " + clave + " en config.properties.");
         }
 
         return valor;

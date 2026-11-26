@@ -16,7 +16,11 @@ public class HorarioVisitaProgramada implements PoliticaHorarioIngreso {
             throw new IllegalArgumentException("Esta regla requiere una visita preregistrada con fecha.");
         }
 
-        LocalDateTime cita = visita.getFechaProgramada();
+        return calcular(visita.getFechaProgramada());
+    }
+
+    public HorarioIngreso calcular(LocalDateTime cita) {
+        Objects.requireNonNull(cita, "La fecha de la cita es obligatoria.");
         return new HorarioIngreso(cita.minusHours(1), cita.plusHours(1));
     }
 }

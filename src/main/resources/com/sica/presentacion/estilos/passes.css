@@ -1,0 +1,48 @@
+.pass-banner {
+    -fx-background-color: -sica-deep;
+    -fx-background-radius: 23px;
+    -fx-padding: 20px 24px;
+}
+.pass-banner-title { -fx-font-size: 27px; -fx-font-weight: bold; -fx-text-fill: #F2FAEF; }
+.pass-banner-copy { -fx-font-size: 13px; -fx-text-fill: #DAEBE8; -fx-wrap-text: true; }
+.pass-banner-mark {
+    -fx-background-color: rgba(240,255,245,.15);
+    -fx-background-radius: 13px;
+    -fx-min-width: 45px; -fx-min-height: 45px; -fx-max-width: 45px; -fx-max-height: 45px;
+}
+.pass-banner-mark .icon-line { -fx-stroke: -sica-lime; }
+.pass-count { -fx-text-fill: -sica-lime; -fx-font-size: 29px; -fx-font-weight: bold; }
+.pass-count-label { -fx-text-fill: #E3F3EE; -fx-font-size: 12px; }
+.pass-count-block { -fx-padding: 0 10px; }
+.pass-tools { -fx-padding: 1px 0; }
+.pass-results { -fx-padding: 0 2px 5px; }
+.pass-request { -fx-padding: 16px 19px; }
+.pass-receipt { -fx-padding: 0 0 13px 0; }
+.pass-ticket { -fx-effect: dropshadow(gaussian, rgba(21,49,35,.11), 14, 0, 0, 3); }
+.ticket-upper { -fx-background-color: #FFFFFF; }
+.ticket-stub { -fx-background-color: #E0EFDB; }
+.ticket-upper-content { -fx-padding: 17px 19px 13px 19px; }
+.ticket-stub-content { -fx-padding: 14px 19px 13px 19px; }
+.ticket-wordmark { -fx-font-size: 21px; -fx-font-weight: bold; }
+.ticket-folio {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E6659;
+    -fx-padding: 5px 9px;
+    -fx-background-color: #ECF4E9;
+    -fx-background-radius: 7px;
+}
+.ticket-caption { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #4F6958; }
+.ticket-person { -fx-font-size: 21px; -fx-font-weight: bold; }
+.ticket-stamp {
+    -fx-background-color: #D6EDC7;
+    -fx-background-radius: 50%;
+    -fx-min-height: 35px; -fx-min-width: 35px; -fx-max-height: 35px; -fx-max-width: 35px;
+}
+.ticket-state { -fx-background-radius: 20px; -fx-padding: 4px 9px; -fx-font-size: 11px; -fx-font-weight: bold; }
+.ticket-active { -fx-background-color: #DAEED9; -fx-text-fill: #2A6240; }
+.ticket-inactive { -fx-background-color: #E3EEEE; -fx-text-fill: #365954; }
+.ticket-date { -fx-font-size: 12px; -fx-text-fill: #39594B; }
+.ticket-hour { -fx-font-size: 19px; -fx-font-weight: bold; -fx-text-fill: #193E2D; }
+.ticket-reviewer { -fx-font-size: 11px; -fx-text-fill: #496452; }

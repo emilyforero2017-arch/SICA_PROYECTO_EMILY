@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public final class AplicacionSica implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(AplicacionSica.class.getName());
+    private final ConexionBaseDatos conexiones;
     private final GestorTransacciones gestor;
     private final ContextoSesion contexto = new ContextoSesion();
     private final CountDownLatch finalizacion = new CountDownLatch(1);
@@ -37,13 +38,14 @@ public final class AplicacionSica implements AutoCloseable {
     private final IncidenteCase incidentes;
     private final SeguridadAccesosCase seguridad;
     private final AuditoriaCase auditoria;
-    private final AvisosSolicitudCase avisos;
+    private final ResumenPorteriaCase resumenPorteria;
     private boolean iniciada;
     private boolean cerrada;
 
     public AplicacionSica(ConfiguracionBasedatos configuracion) {
         // El gestor proporcionará una fábrica JDBC y una conexión propia para cada operación.
-        gestor = new GestorTransaccionesJdbc(new ConexionBaseDatos(configuracion));
+        conexiones = new ConexionBaseDatos(configuracion, true);
+        gestor = new GestorTransaccionesJdbc(conexiones);
         var contrasenas = new ServicioContrasenasPbkdf2();
         var ejecutor = new EjecutorOperaciones(gestor, contexto);
         inicioSesion = new IniciarSesionCase(gestor, contrasenas);
@@ -63,7 +65,7 @@ public final class AplicacionSica implements AutoCloseable {
         incidentes = new IncidenteCase(ejecutor);
         seguridad = new SeguridadAccesosCase(ejecutor);
         auditoria = new AuditoriaCase(ejecutor);
-        avisos = new AvisosSolicitudCase(ejecutor);
+        resumenPorteria = new ResumenPorteriaCase(ejecutor);
         revisiones = new ProgramadorRevisionesAutomaticas(
                 new VencimientoVisitasCase(gestor), new RegularizacionSalidasCase(gestor));
     }
@@ -113,7 +115,7 @@ public final class AplicacionSica implements AutoCloseable {
     public IncidenteCase getIncidentes() { return incidentes; }
     public SeguridadAccesosCase getSeguridad() { return seguridad; }
     public AuditoriaCase getAuditoria() { return auditoria; }
-    public AvisosSolicitudCase getAvisos() { return avisos; }
+    public ResumenPorteriaCase getResumenPorteria() { return resumenPorteria; }
 
     public void esperarCierre() throws InterruptedException { finalizacion.await(); }
 
@@ -127,6 +129,7 @@ public final class AplicacionSica implements AutoCloseable {
             // Se intenta detener todo aunque falle el cierre de algún seguimiento de sesión.
             cerrarRecurso(cierreSesion::cerrar);
             cerrarRecurso(revisiones);
+            cerrarRecurso(conexiones);
         } finally { finalizacion.countDown(); }
     }
 

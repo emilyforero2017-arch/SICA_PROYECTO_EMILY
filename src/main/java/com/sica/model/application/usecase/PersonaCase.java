@@ -3,6 +3,7 @@ package com.sica.model.application.usecase;
 import com.sica.model.application.port.FabricarRepositorios;
 import com.sica.model.domain.entity.BitacoraAuditoria;
 import com.sica.model.domain.entity.EstadoAccesoPersona;
+import com.sica.model.domain.entity.FotoPersona;
 import com.sica.model.domain.entity.Persona;
 import com.sica.model.domain.entity.TipoPersona;
 import com.sica.model.domain.repository.PersonaRepository;
@@ -83,7 +84,7 @@ public class PersonaCase {
                     "Se registró el trabajador: " + registrado.getNombre()
                     + "; documento: " + registrado.getDocumentoIdentidad()
                     + "; empresa: " + registrado.getEmpresaId()
-                    + "; foto: " + registrado.getUrlFoto()
+                    + "; foto: " + FotoPersona.describir(registrado.getUrlFoto())
                     + "; estado de acceso: " + estado.getNombreEstado()
                     + "; vinculación laboral: activa");
 
@@ -111,7 +112,8 @@ public class PersonaCase {
             // El documento, la empresa, las restricciones y la vinculación se mantienen.
             Persona actualizado = new Persona(
                     anterior.getId(), nombre, anterior.getDocumentoIdentidad(), anterior.getEmpresaId(),
-                    anterior.getTipoPersona(), anterior.getEstadoAccesoId(), urlFoto,
+                    anterior.getTipoPersona(), anterior.getEstadoAccesoId(),
+                    urlFoto == null ? anterior.getUrlFoto() : urlFoto,
                     anterior.getVinculacionLaboralActiva());
 
             String detalles = "Trabajador: " + trabajadorId
@@ -119,8 +121,8 @@ public class PersonaCase {
                     + "; empresa: " + anterior.getEmpresaId()
                     + "; nombre anterior: " + anterior.getNombre()
                     + "; nombre actualizado: " + actualizado.getNombre()
-                    + "; foto anterior: " + anterior.getUrlFoto()
-                    + "; foto actualizada: " + actualizado.getUrlFoto();
+                    + "; foto anterior: " + FotoPersona.describir(anterior.getUrlFoto())
+                    + "; foto actualizada: " + FotoPersona.describir(actualizado.getUrlFoto());
 
             intento.iniciar();
             if (!repositorio.actualizar(actualizado)) {
@@ -234,7 +236,7 @@ public class PersonaCase {
                 responsableId, fecha, "REGISTRO_INVITADO", "personas", registrado.getId(),
                 "Se registró el invitado: " + registrado.getNombre()
                 + "; documento: " + registrado.getDocumentoIdentidad()
-                + "; foto: " + registrado.getUrlFoto()
+                + "; foto: " + FotoPersona.describir(registrado.getUrlFoto())
                 + "; estado de acceso: " + estado.getNombreEstado()));
         return registrado;
     }

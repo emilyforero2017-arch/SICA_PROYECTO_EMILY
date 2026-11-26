@@ -2,7 +2,11 @@ package com.sica.infrastructure.persistence;
 
 import com.sica.model.domain.entity.TipoIngreso;
 import com.sica.model.domain.entity.Visita;
+import com.sica.model.domain.repository.MovimientoPorteria;
+import com.sica.model.domain.repository.ResumenPorteria;
+import com.sica.model.domain.repository.SolicitudEnPorteria;
 import com.sica.model.domain.repository.VisitaRepository;
+import com.sica.model.domain.repository.VisitaPrevista;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,6 +39,153 @@ public final class VisitaRepositoryJdbc implements VisitaRepository {
         // Comparte la conexión de la operación con las personas y su auditoría.
         this.conexion = Objects.requireNonNull(
                 conexion, "La conexión de la base de datos es obligatoria.");
+    }
+
+    @Override
+    public List<VisitaPrevista> listarVisitasPrevistas(LocalDateTime desde, LocalDateTime hasta) {
+        String sql = """
+                SELECT v.id, p.nombre AS invitado, p.documento_identidad,
+                       e.nombre AS empresa, u.nombre AS funcionario, v.fecha_programada
+                  FROM visitas v
+                  JOIN visita_estados estado ON estado.id = v.estado_visita_id
+                  JOIN personas p ON p.id = v.persona_id
+                  JOIN persona_estados_acceso acceso ON acceso.id = p.estado_acceso_id
+                  JOIN empresas e ON e.id = v.empresa_destino_id
+                  JOIN usuarios u ON u.id = v.funcionario_destinatario_id
+                  JOIN roles rol ON rol.id = u.rol_id
+                 WHERE v.tipo_ingreso = 'Invitado preregistrado'
+                   AND estado.nombre_estado = 'Aprobado' AND acceso.nombre_estado = 'Activo'
+                   AND e.esta_activa AND u.esta_activo AND u.empresa_id = e.id
+                   AND rol.nombre_rol = 'Funcionario de Empresa'
+                   AND v.aprobada_por_id = u.id AND v.fecha_aprobacion IS NOT NULL
+                   AND v.fecha_entrada IS NULL AND v.fecha_salida IS NULL AND v.fecha_cierre_sistema IS NULL
+                   AND v.fecha_programada >= ? AND v.fecha_programada < ?
+                 ORDER BY v.fecha_programada, v.id
+                """;
+        List<VisitaPrevista> visitas = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setObject(1, desde);
+            consulta.setObject(2, hasta);
+            try (ResultSet resultado = consulta.executeQuery()) {
+                while (resultado.next()) {
+                    visitas.add(new VisitaPrevista(resultado.getInt("id"), resultado.getString("invitado"),
+                            resultado.getString("documento_identidad"), resultado.getString("empresa"),
+                            resultado.getString("funcionario"), resultado.getObject("fecha_programada", LocalDateTime.class)));
+                }
+            }
+        } catch (SQLException error) {
+            throw new IllegalStateException("No se pudieron consultar las próximas llegadas.", error);
+        }
+        return visitas;
+    }
+
+    @Override
+    public List<SolicitudEnPorteria> listarSolicitudesEnviadas(Integer guardaId) {
+        // La auditoría identifica al guarda que envió la solicitud.
+        String sql = """
+                SELECT v.*, p.nombre AS persona, p.documento_identidad,
+                       e.nombre AS empresa, u.nombre AS funcionario, estado.nombre_estado
+                  FROM visitas v
+                  JOIN personas p ON p.id = v.persona_id
+                  JOIN empresas e ON e.id = v.empresa_destino_id
+                  JOIN usuarios u ON u.id = v.funcionario_destinatario_id
+                  JOIN visita_estados estado ON estado.id = v.estado_visita_id
+                 WHERE v.tipo_ingreso IN ('Invitado no anunciado', 'Trabajador con carnet olvidado')
+                   AND EXISTS (
+                       SELECT 1 FROM bitacora_auditoria b
+                        WHERE b.usuario_id = ? AND b.tabla_afectada = 'visitas'
+                          AND b.registro_id_afectado = v.id
+                          AND b.accion_realizada IN ('SOLICITUD_VISITA_NO_ANUNCIADA', 'SOLICITUD_CARNET_OLVIDADO')
+                   )
+                 ORDER BY v.id DESC
+                """;
+        List<SolicitudEnPorteria> solicitudes = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setInt(1, guardaId);
+            try (ResultSet resultado = consulta.executeQuery()) {
+                while (resultado.next()) {
+                    solicitudes.add(new SolicitudEnPorteria(leerVisita(resultado), resultado.getString("persona"),
+                            resultado.getString("documento_identidad"), resultado.getString("empresa"),
+                            resultado.getString("funcionario"), resultado.getString("nombre_estado")));
+                }
+            }
+        } catch (SQLException error) {
+            throw new IllegalStateException("No se pudieron consultar las solicitudes de portería.", error);
+        }
+        return solicitudes;
+    }
+
+    @Override
+    public List<MovimientoPorteria> listarMovimientosPorteria(Integer guardaId, LocalDateTime desde,
+            LocalDateTime hasta, MovimientoPorteria.Tipo tipo) {
+        String filtroIngreso = switch (tipo) {
+            case ENTRADA_INVITADO -> " AND v.tipo_ingreso IN ('Invitado preregistrado', 'Invitado no anunciado')";
+            case INGRESO_LABORAL -> " AND v.tipo_ingreso IN ('Trabajador con carnet', 'Trabajador con carnet olvidado')";
+            case SALIDA -> "";
+        };
+        // La bitácora conserva la cuenta que registró el movimiento, incluso si la visita se cerró después.
+        String sql = """
+                SELECT b.fecha_hora, p.nombre AS persona, e.nombre AS empresa
+                  FROM bitacora_auditoria b
+                  JOIN visitas v ON v.id = b.registro_id_afectado
+                  JOIN personas p ON p.id = v.persona_id
+                  JOIN empresas e ON e.id = v.empresa_destino_id
+                 WHERE b.usuario_id = ? AND b.tabla_afectada = 'visitas'
+                   AND b.accion_realizada = ?
+                   AND b.fecha_hora >= ? AND b.fecha_hora < ?
+                """ + filtroIngreso + " ORDER BY b.fecha_hora DESC, b.id DESC LIMIT 5";
+        List<MovimientoPorteria> movimientos = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setInt(1, guardaId);
+            consulta.setString(2, tipo == MovimientoPorteria.Tipo.SALIDA ? "REGISTRO_SALIDA" : "REGISTRO_ENTRADA");
+            consulta.setObject(3, desde);
+            consulta.setObject(4, hasta);
+            try (ResultSet resultado = consulta.executeQuery()) {
+                while (resultado.next()) {
+                    movimientos.add(new MovimientoPorteria(resultado.getObject("fecha_hora", LocalDateTime.class),
+                            resultado.getString("persona"), resultado.getString("empresa")));
+                }
+            }
+        } catch (SQLException error) {
+            throw new IllegalStateException("No se pudieron consultar los movimientos de portería.", error);
+        }
+        return movimientos;
+    }
+
+    @Override
+    public ResumenPorteria resumirPorteria(Integer guardaId, LocalDateTime desde, LocalDateTime hasta) {
+        // La bitácora identifica quién confirmó cada movimiento y quién envió cada solicitud.
+        String sql = """
+                SELECT COUNT(CASE WHEN movimiento.accion_realizada = 'REGISTRO_ENTRADA' THEN 1 END) AS entradas,
+                       COUNT(CASE WHEN movimiento.accion_realizada = 'REGISTRO_SALIDA' THEN 1 END) AS salidas,
+                       (SELECT COUNT(DISTINCT visita.id)
+                          FROM bitacora_auditoria solicitud
+                          JOIN visitas visita ON visita.id = solicitud.registro_id_afectado
+                          JOIN visita_estados estado ON estado.id = visita.estado_visita_id
+                         WHERE solicitud.usuario_id = ?
+                           AND solicitud.tabla_afectada = 'visitas'
+                           AND solicitud.accion_realizada IN ('SOLICITUD_VISITA_NO_ANUNCIADA', 'SOLICITUD_CARNET_OLVIDADO')
+                           AND estado.nombre_estado IN ('Pendiente de Aprobación', 'Pendiente de Aprobación por Olvido')
+                       ) AS pendientes
+                  FROM bitacora_auditoria movimiento
+                 WHERE movimiento.usuario_id = ?
+                   AND movimiento.tabla_afectada = 'visitas'
+                   AND movimiento.accion_realizada IN ('REGISTRO_ENTRADA', 'REGISTRO_SALIDA')
+                   AND movimiento.fecha_hora >= ? AND movimiento.fecha_hora < ?
+                """;
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setInt(1, guardaId);
+            consulta.setInt(2, guardaId);
+            consulta.setObject(3, desde);
+            consulta.setObject(4, hasta);
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (!resultado.next()) throw new SQLException("MySQL no devolvió los totales de portería.");
+                return new ResumenPorteria(resultado.getLong("entradas"), resultado.getLong("salidas"),
+                        resultado.getLong("pendientes"));
+            }
+        } catch (SQLException error) {
+            throw new IllegalStateException("No se pudo consultar el resumen de portería.", error);
+        }
     }
 
     @Override

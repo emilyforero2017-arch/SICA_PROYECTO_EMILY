@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.sica.presentacion.controladores.LoginController" fx:id="root" styleClass="login-root">
+    <ImageView fx:id="forest" managed="false" mouseTransparent="true" smooth="true"/>
+    <Region styleClass="login-shade" mouseTransparent="true"/>
+    <BorderPane styleClass="login-layout">
+        <top><HBox fx:id="masthead" spacing="12" alignment="CENTER_LEFT"/></top>
+        <center>
+            <HBox alignment="CENTER_LEFT" spacing="24" styleClass="login-content">
+                <VBox fx:id="editorial" spacing="10" alignment="CENTER_LEFT" minWidth="0" HBox.hgrow="ALWAYS"/>
+                <StackPane fx:id="glass" styleClass="login-glass" maxHeight="-Infinity" maxWidth="425" minWidth="360" prefWidth="416">
+                    <VBox fx:id="form" spacing="17" styleClass="login-form"/>
+                </StackPane>
+            </HBox>
+        </center>
+        <bottom><HBox fx:id="footer" alignment="CENTER_LEFT"/></bottom>
+    </BorderPane>
+</StackPane>

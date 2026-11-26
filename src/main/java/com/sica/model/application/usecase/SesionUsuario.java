@@ -14,9 +14,11 @@ public final class SesionUsuario {
     private final Integer rolId;
     private final String nombreRol;
     private final Integer empresaId;
+    private final String nombreEmpresa;
     private final LocalDateTime fechaInicio;
+    private final byte[] fotoPerfil;
 
-    SesionUsuario(Usuario usuario, Rol rol, LocalDateTime fechaInicio) {
+    SesionUsuario(Usuario usuario, Rol rol, LocalDateTime fechaInicio, byte[] fotoPerfil, String nombreEmpresa) {
         Objects.requireNonNull(usuario);
         Objects.requireNonNull(rol);
         this.usuarioId = Objects.requireNonNull(usuario.getId());
@@ -25,7 +27,9 @@ public final class SesionUsuario {
         this.rolId = rol.getId();
         this.nombreRol = rol.getNombreRol();
         this.empresaId = usuario.getEmpresaId();
+        this.nombreEmpresa = nombreEmpresa;
         this.fechaInicio = Objects.requireNonNull(fechaInicio);
+        this.fotoPerfil = fotoPerfil == null ? null : fotoPerfil.clone();
     }
 
     public Integer getUsuarioId() { return usuarioId; }
@@ -34,5 +38,7 @@ public final class SesionUsuario {
     public Integer getRolId() { return rolId; }
     public String getNombreRol() { return nombreRol; }
     public Integer getEmpresaId() { return empresaId; }
+    public String getNombreEmpresa() { return nombreEmpresa; }
     public LocalDateTime getFechaInicio() { return fechaInicio; }
+    public byte[] getFotoPerfil() { return fotoPerfil == null ? null : fotoPerfil.clone(); }
 }

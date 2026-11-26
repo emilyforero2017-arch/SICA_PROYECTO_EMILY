@@ -57,7 +57,8 @@ public class EmpresaUseCase {
             guardarAuditoria(
                     repositorios, usuario, "empresas", registrada.getId(),
                     "REGISTRO_EMPRESA",
-                    "Se registró la empresa: " + registrada.getNombre());
+                    "Se registró la empresa: " + registrada.getNombre()
+                            + (registrada.tieneLogo() ? "; logo cargado" : ""));
 
             return registrada;
         });
@@ -116,7 +117,7 @@ public class EmpresaUseCase {
             // Cambiar el nombre o contacto no vuelve a activar una empresa retirada.
             Empresa actualizada = new Empresa(
                     anterior.getId(), empresa.getNombre(), empresa.getContactoPrincipal(),
-                    anterior.isEstaActiva());
+                    anterior.isEstaActiva(), empresa.getLogo());
 
             // Preparamos el texto antes de guardar para conservar los valores anteriores y nuevos.
             String detalles =
@@ -125,7 +126,8 @@ public class EmpresaUseCase {
                     + "; contacto principal anterior: "
                     + Objects.toString(anterior.getContactoPrincipal(), "sin asignar")
                     + "; contacto principal actualizado: "
-                    + Objects.toString(empresa.getContactoPrincipal(), "sin asignar");
+                    + Objects.toString(empresa.getContactoPrincipal(), "sin asignar")
+                    + (empresa.tieneLogo() ? "; logo actualizado" : "");
 
             // Las validaciones y la búsqueda ya terminaron; ahora empieza el guardado.
             intento.iniciar();

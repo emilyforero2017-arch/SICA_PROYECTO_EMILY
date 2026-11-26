@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.sica.presentacion.controladores.ShellController" fx:id="root" styleClass="sica-root">
+    <HBox fx:id="workspace" styleClass="workspace" spacing="24">
+        <StackPane fx:id="sidebarSlot" alignment="TOP_CENTER" styleClass="sidebar-slot"/>
+        <BorderPane fx:id="mainPane" HBox.hgrow="ALWAYS" minWidth="0" styleClass="main-pane">
+            <top><StackPane fx:id="headerSlot"/></top>
+            <center>
+                <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" pannable="false" styleClass="workspace-scroll">
+                    <content>
+                        <VBox fx:id="page" spacing="19" minWidth="0" fillWidth="true" styleClass="workspace-page"/>
+                    </content>
+                </ScrollPane>
+            </center>
+        </BorderPane>
+    </HBox>
+</StackPane>

@@ -36,6 +36,15 @@ public class RolPermisoCase {
                 repositorios.crearPermisoRepository().listar());
     }
 
+    public CatalogoRoles consultarCatalogo(Integer responsableId) {
+        return ejecutor.ejecutar(responsableId, "consultar_roles_permisos",
+                (repositorios, responsable) -> new CatalogoRoles(
+                        repositorios.crearRolRepository().listar(),
+                        repositorios.crearPermisoRepository().listar()));
+    }
+
+    public record CatalogoRoles(List<Rol> roles, List<Permiso> permisos) { }
+
     public List<Permiso> consultarPermisosDeRol(Integer responsableId, Integer rolId) {
         if (rolId == null) {
             throw new IllegalArgumentException("El rol a consultar es obligatorio.");

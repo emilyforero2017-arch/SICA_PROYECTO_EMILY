@@ -1,5 +1,6 @@
 package com.sica.infrastructure.persistence;
 
+import com.sica.model.domain.entity.FotoPersona;
 import com.sica.model.domain.entity.Persona;
 import com.sica.model.domain.entity.TipoPersona;
 import com.sica.model.domain.repository.PersonaRepository;
@@ -34,16 +35,19 @@ public final class PersonaRepositoryJdbc implements PersonaRepository {
     public Persona guardar(Persona persona) {
         Objects.requireNonNull(persona, "Los datos de la persona son obligatorios.");
 
+        String foto = persona.getUrlFoto();
+        boolean archivo = FotoPersona.esCarga(foto);
         String sql = """
                 INSERT INTO personas
                     (nombre, documento_identidad, empresa_id, tipo_persona,
-                     estado_acceso_id, url_foto, vinculacion_laboral_activa)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
+                     estado_acceso_id, url_foto, vinculacion_laboral_activa%s)
+                VALUES (?, ?, ?, ?, ?, ?, ?%s)
+                """.formatted(archivo ? ", foto_archivo" : "", archivo ? ", ?" : "");
 
         try (PreparedStatement consulta = conexion.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
             completarDatos(consulta, persona);
+            if (archivo) consulta.setBytes(8, FotoPersona.decodificar(foto));
 
             if (consulta.executeUpdate() != 1) {
                 throw new SQLException("No se guardó la persona esperada.");
@@ -59,7 +63,7 @@ public final class PersonaRepositoryJdbc implements PersonaRepository {
                         identificadores.getInt(1), persona.getNombre(),
                         persona.getDocumentoIdentidad(), persona.getEmpresaId(),
                         persona.getTipoPersona(), persona.getEstadoAccesoId(),
-                        persona.getUrlFoto(), persona.getVinculacionLaboralActiva());
+                        archivo ? FotoPersona.ARCHIVO_GUARDADO : foto, persona.getVinculacionLaboralActiva());
             }
         } catch (SQLException error) {
             throw new IllegalStateException("No se pudo guardar la persona.", error);
@@ -82,6 +86,20 @@ public final class PersonaRepositoryJdbc implements PersonaRepository {
     public Optional<Persona> buscarPorDocumento(String documentoIdentidad) {
         Objects.requireNonNull(documentoIdentidad, "El documento de identidad es obligatorio.");
         return buscar(CONSULTA_PERSONAS + " WHERE documento_identidad = ?", documentoIdentidad, false);
+    }
+
+    @Override
+    public Optional<byte[]> buscarFotoArchivo(Integer id) {
+        String sql = "SELECT foto_archivo FROM personas WHERE id = ? AND url_foto = ?";
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setInt(1, id);
+            consulta.setString(2, FotoPersona.ARCHIVO_GUARDADO);
+            try (ResultSet resultado = consulta.executeQuery()) {
+                return resultado.next() ? Optional.ofNullable(resultado.getBytes(1)) : Optional.empty();
+            }
+        } catch (SQLException error) {
+            throw new IllegalStateException("No se pudo consultar la foto de la persona.", error);
+        }
     }
 
     @Override
@@ -157,16 +175,19 @@ public final class PersonaRepositoryJdbc implements PersonaRepository {
         Objects.requireNonNull(persona.getId(), "El identificador de la persona es obligatorio.");
 
         // El caso de uso prepara los cambios permitidos y conserva los datos que deben mantenerse.
+        String foto = persona.getUrlFoto();
+        boolean archivo = FotoPersona.esCarga(foto);
         String sql = """
                 UPDATE personas
                 SET nombre = ?, documento_identidad = ?, empresa_id = ?, tipo_persona = ?,
-                    estado_acceso_id = ?, url_foto = ?, vinculacion_laboral_activa = ?
+                    estado_acceso_id = ?, url_foto = ?, vinculacion_laboral_activa = ?%s
                 WHERE id = ?
-                """;
+                """.formatted(archivo ? ", foto_archivo = ?" : "");
 
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
             completarDatos(consulta, persona);
-            consulta.setInt(8, persona.getId());
+            if (archivo) consulta.setBytes(8, FotoPersona.decodificar(foto));
+            consulta.setInt(archivo ? 9 : 8, persona.getId());
             return consulta.executeUpdate() == 1;
         } catch (SQLException error) {
             throw new IllegalStateException("No se pudo actualizar la persona.", error);
@@ -182,7 +203,8 @@ public final class PersonaRepositoryJdbc implements PersonaRepository {
             case INVITADO -> "Invitado";
         });
         consulta.setInt(5, persona.getEstadoAccesoId());
-        consulta.setString(6, persona.getUrlFoto());
+        String foto = persona.getUrlFoto();
+        consulta.setString(6, FotoPersona.esCarga(foto) ? FotoPersona.ARCHIVO_GUARDADO : foto);
         consulta.setObject(7, persona.getVinculacionLaboralActiva(), Types.BOOLEAN);
     }
 

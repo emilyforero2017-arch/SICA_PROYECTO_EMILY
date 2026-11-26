@@ -5,6 +5,7 @@ public class Empresa {
     private String nombre;
     private String contactoPrincipal;
     private boolean estaActiva;
+    private final byte[] logo;
 
     public Empresa(String nombre, String contactoPrincipal) {
         this(null, nombre, contactoPrincipal);
@@ -24,12 +25,23 @@ public class Empresa {
             String nombre,
             String contactoPrincipal,
             boolean estaActiva) {
+        this(id, nombre, contactoPrincipal, estaActiva, null);
+    }
 
+    public Empresa(Integer id, String nombre, String contactoPrincipal, boolean estaActiva, byte[] logo) {
         this.id = id;
         this.nombre = validarNombre(nombre);
         this.contactoPrincipal = validarContactoPrincipal(contactoPrincipal);
         this.estaActiva = estaActiva;
+        if (logo != null && (logo.length == 0 || logo.length > 128 * 1024)) {
+            throw new IllegalArgumentException("El logo no tiene un tamaño válido.");
+        }
+        this.logo = logo == null ? null : logo.clone();
     }
+
+    public byte[] getLogo() { return logo == null ? null : logo.clone(); }
+
+    public boolean tieneLogo() { return logo != null; }
 
     public Integer getId() {
         return id;

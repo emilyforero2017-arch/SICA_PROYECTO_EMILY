@@ -1,0 +1,46 @@
+.root {
+    -sica-lime: #C3E89F;
+    -sica-deep: #115D5D;
+    -sica-aqua: #B2D8D8;
+    -sica-willow: #A6C964;
+    -sica-olive: #81A939;
+    -sica-background: #F3F6EF;
+    -sica-white: #FFFFFF;
+    -sica-soft: #EAF2E5;
+    -sica-ink: #18231B;
+    -sica-muted: #66756B;
+    -sica-rule: #E3EAE1;
+    -sica-success: #397A51;
+    -sica-warning: #C28A36;
+    -sica-error: #B94D4D;
+    -sica-focus: #4D795C;
+    -sica-success-bg: #E3F1E1;
+    -sica-warning-bg: #FBF0D9;
+    -sica-error-bg: #F8E7E4;
+    -sica-info-bg: #E2F0EE;
+
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-base: -sica-white;
+    -fx-background: -sica-background;
+    -fx-text-base-color: -sica-ink;
+    -fx-accent: -sica-deep;
+    -fx-focus-color: -sica-focus;
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: -sica-background;
+}
+
+.label { -fx-text-fill: -sica-ink; }
+.muted { -fx-font-size: 12px; -fx-font-weight: normal; -fx-text-fill: -sica-muted; }
+.row-title { -fx-font-size: 13px; -fx-font-weight: bold; }
+.field-label { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #526358; }
+.form-error { -fx-font-size: 12px; -fx-text-fill: -sica-error; -fx-wrap-text: true; }
+.icon-line {
+    -fx-fill: transparent;
+    -fx-stroke: -sica-deep;
+    -fx-stroke-width: 1.65;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+.rule { -fx-background-color: -sica-rule; -fx-min-height: 1px; -fx-max-height: 1px; }

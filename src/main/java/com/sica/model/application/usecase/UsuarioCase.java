@@ -1,5 +1,7 @@
 package com.sica.model.application.usecase;
 
+import com.sica.model.domain.policy.ValidadorCorreo;
+
 import com.sica.model.application.port.FabricarRepositorios;
 import com.sica.model.application.port.ServicioContrasenas;
 import com.sica.model.domain.entity.BitacoraAuditoria;
@@ -38,7 +40,11 @@ public class UsuarioCase {
             char[] contrasena,
             Integer rolId,
             Integer empresaId) {
+        return registrar(responsableId, nombre, email, contrasena, rolId, empresaId, null);
+    }
 
+    public Usuario registrar(Integer responsableId, String nombre, String email, char[] contrasena,
+            Integer rolId, Integer empresaId, byte[] fotoPerfil) {
         IntentoGuardado intento = new IntentoGuardado(
                 "CREACION_USUARIO_FALLIDA", "usuarios", null);
 
@@ -53,7 +59,7 @@ public class UsuarioCase {
 
             // El servicio devuelve el hash; el repositorio guardará ese resultado con la cuenta.
             String hash = servicioContrasenas.generarHash(contrasena);
-            Usuario nuevo = new Usuario(nombre, email, hash, rolId, empresaId);
+            Usuario nuevo = new Usuario(null, nombre, email, hash, rolId, empresaId, true, fotoPerfil);
 
             // El constructor de Usuario deja activa la cuenta nueva.
             intento.iniciar();
@@ -65,7 +71,7 @@ public class UsuarioCase {
                     + "; correo: " + registrado.getEmail()
                     + "; rol: " + rol.getNombreRol()
                     + "; empresa: " + Objects.toString(registrado.getEmpresaId(), "sin empresa")
-                    + "; estado: activo");
+                    + "; estado: activo" + (fotoPerfil != null ? "; foto de perfil cargada" : ""));
 
             return registrado;
         });
@@ -78,13 +84,28 @@ public class UsuarioCase {
                 repositorios.crearUsuarioRepository().listarActivos());
     }
 
+    // Cuentas usa estas tres listas juntas para mostrar roles y empresas por nombre.
+    public DatosCuentas consultarDirectorio(Integer responsableId) {
+        return ejecutor.ejecutarConPermisos(responsableId,
+                List.of("consultar_usuarios", "consultar_roles_permisos", "consultar_empresas"),
+                (repositorios, responsable) -> new DatosCuentas(
+                        repositorios.crearUsuarioRepository().listarActivos(),
+                        repositorios.crearRolRepository().listar(),
+                        repositorios.crearEmpresaRepository().listar()));
+    }
+
+    public record DatosCuentas(List<Usuario> usuarios, List<Rol> roles, List<Empresa> empresas) { }
+
     // Actualiza los datos de identificación sin volver a activar una cuenta desactivada.
     public Usuario actualizar(
             Integer responsableId,
             Integer usuarioId,
             String nombre,
             String email) {
+        return actualizar(responsableId, usuarioId, nombre, email, null);
+    }
 
+    public Usuario actualizar(Integer responsableId, Integer usuarioId, String nombre, String email, byte[] fotoPerfil) {
         if (usuarioId == null) {
             throw new IllegalArgumentException("El identificador del usuario es obligatorio.");
         }
@@ -109,13 +130,14 @@ public class UsuarioCase {
             // Actualizar los datos conserva el rol que se eligió al registrar la cuenta.
             Usuario actualizado = new Usuario(
                     anterior.getId(), nombre, email, anterior.getPasswordHash(),
-                    anterior.getRolId(), anterior.getEmpresaId(), anterior.isEstaActivo());
+                    anterior.getRolId(), anterior.getEmpresaId(), anterior.isEstaActivo(), fotoPerfil);
 
             // Conservamos el antes y el después para explicar el cambio en la auditoría.
             String detalles = "Nombre anterior: " + anterior.getNombre()
                     + "; nombre actualizado: " + nombre
                     + "; correo anterior: " + anterior.getEmail()
-                    + "; correo actualizado: " + email;
+                    + "; correo actualizado: " + email
+                    + (fotoPerfil != null ? "; foto de perfil actualizada" : "");
 
             intento.iniciar();
             if (!repositorio.actualizar(actualizado)) {
@@ -217,9 +239,7 @@ public class UsuarioCase {
         if (nombre == null || nombre.isBlank() || nombre.length() > 100) {
             throw new IllegalArgumentException("El nombre es obligatorio y admite hasta 100 caracteres.");
         }
-        if (email == null || email.isBlank() || email.length() > 100) {
-            throw new IllegalArgumentException("El correo es obligatorio y admite hasta 100 caracteres.");
-        }
+        ValidadorCorreo.validar(email);
     }
 
     private void guardarAuditoria(

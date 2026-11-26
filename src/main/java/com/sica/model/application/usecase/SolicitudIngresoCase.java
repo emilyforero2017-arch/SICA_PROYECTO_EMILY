@@ -152,6 +152,24 @@ public class SolicitudIngresoCase {
         });
     }
 
+    public List<DetalleSolicitudIngreso> listarAsignadas(Integer funcionarioId) {
+        return ejecutor.ejecutar(funcionarioId, "consultar_visitas_asignadas", (repositorios, funcionario) -> {
+            Integer empresaId = funcionario.getEmpresaId();
+            if (empresaId == null) throw new IllegalStateException("El funcionario debe tener una empresa asignada.");
+            var personas = repositorios.crearPersonaRepository();
+            var estados = repositorios.crearEstadoVisitaRepository();
+            return repositorios.crearVisitaRepository().listarPorFuncionarioDestinatario(funcionarioId).stream()
+                    .filter(visita -> esSolicitud(visita.getTipoIngreso())
+                            && funcionarioId.equals(visita.getFuncionarioDestinatarioId())
+                            && empresaId.equals(visita.getEmpresaDestinoId()))
+                    .sorted(Comparator.comparing(Visita::getId).reversed())
+                    .map(visita -> new DetalleSolicitudIngreso(visita,
+                            personas.buscarPorId(visita.getPersonaId()).orElseThrow(),
+                            estados.buscarPorId(visita.getEstadoVisitaId()).orElseThrow()))
+                    .toList();
+        });
+    }
+
     // Autoriza la solicitud pendiente; la fecha de aprobación inicia el intervalo de 30 minutos.
     public Visita aprobar(Integer funcionarioId, Integer solicitudId) {
         return resolver(funcionarioId, solicitudId, true, null);

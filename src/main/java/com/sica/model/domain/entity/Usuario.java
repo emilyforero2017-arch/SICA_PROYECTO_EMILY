@@ -1,5 +1,7 @@
 package com.sica.model.domain.entity;
 
+import com.sica.model.domain.policy.ValidadorCorreo;
+
 public class Usuario {
 
     private Integer id;
@@ -10,6 +12,7 @@ public class Usuario {
     private final Integer rolId;
     private Integer empresaId;
     private boolean estaActivo;
+    private final byte[] fotoPerfil;
 
     public Usuario(
             String nombre,
@@ -29,15 +32,25 @@ public class Usuario {
             Integer rolId,
             Integer empresaId,
             boolean estaActivo) {
+        this(id, nombre, email, passwordHash, rolId, empresaId, estaActivo, null);
+    }
 
+    public Usuario(Integer id, String nombre, String email, String passwordHash,
+            Integer rolId, Integer empresaId, boolean estaActivo, byte[] fotoPerfil) {
         this.id = id;
         this.nombre = validarNombre(nombre);
-        this.email = validarEmail(email);
+        this.email = ValidadorCorreo.validar(email);
         this.passwordHash = validarPasswordHash(passwordHash);
         this.rolId = validarRolId(rolId);
         this.empresaId = empresaId;
         this.estaActivo = estaActivo;
+        if (fotoPerfil != null && (fotoPerfil.length == 0 || fotoPerfil.length > 512 * 1024)) {
+            throw new IllegalArgumentException("La foto de perfil no tiene un tamaño válido.");
+        }
+        this.fotoPerfil = fotoPerfil == null ? null : fotoPerfil.clone();
     }
+
+    public byte[] getFotoPerfil() { return fotoPerfil == null ? null : fotoPerfil.clone(); }
 
     public Integer getId() {
         return id;
@@ -56,7 +69,7 @@ public class Usuario {
     }
 
     public void setEmail(String email) {
-        this.email = validarEmail(email);
+        this.email = ValidadorCorreo.validar(email);
     }
 
     public String getPasswordHash() {
@@ -100,21 +113,6 @@ public class Usuario {
         }
 
         return nombre;
-    }
-
-    // El correo es obligatorio y admite hasta 100 caracteres.
-    private String validarEmail(String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException(
-                    "El correo del usuario es obligatorio.");
-        }
-
-        if (email.length() > 100) {
-            throw new IllegalArgumentException(
-                    "El correo del usuario admite hasta 100 caracteres.");
-        }
-
-        return email;
     }
 
     // Se recibe el hash que ya calculó el servicio de contraseñas.

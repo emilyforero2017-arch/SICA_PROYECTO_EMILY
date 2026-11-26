@@ -1,0 +1,73 @@
+.sica-logo { -fx-background-color: -sica-lime; -fx-background-radius: 13px; }
+.sica-card {
+    -fx-padding: 19px 20px;
+    -fx-background-radius: 23px;
+    -fx-border-radius: 23px;
+}
+.surface-white { -fx-background-color: -sica-white; -fx-border-color: #EAF0E7; }
+.surface-soft { -fx-background-color: -sica-soft; }
+.surface-lime { -fx-background-color: -sica-lime; }
+.surface-deep { -fx-background-color: -sica-deep; }
+.surface-aqua { -fx-background-color: -sica-aqua; }
+.surface-aqua .muted, .surface-aqua .card-title { -fx-text-fill: #224E4E; }
+.surface-aqua .list-row { -fx-border-color: transparent transparent #9AC6C6 transparent; }
+.card-title { -fx-font-size: 18px; -fx-font-weight: bold; }
+.card-kicker { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #4D6255; }
+.compact-profile { -fx-spacing: 10px; }
+.portrait, .portrait-tone-0 { -fx-background-color: #DCE8D9; -fx-background-radius: 100px; }
+.portrait-tone-1 { -fx-background-color: #DDECEB; }
+.portrait-tone-2 { -fx-background-color: #F3E7D7; }
+.initials { -fx-font-weight: bold; -fx-text-fill: #36574E; }
+
+.status-badge {
+    -fx-background-radius: 40px;
+    -fx-padding: 4px 9px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+.badge-dot { -fx-min-width: 5px; -fx-min-height: 5px; -fx-max-width: 5px; -fx-max-height: 5px; -fx-background-radius: 20px; }
+.status-positive { -fx-background-color: -sica-success-bg; -fx-text-fill: #2B6140; }
+.status-positive .badge-dot { -fx-background-color: -sica-success; }
+.status-warning { -fx-background-color: -sica-warning-bg; -fx-text-fill: #78521D; }
+.status-warning .badge-dot { -fx-background-color: -sica-warning; }
+.status-negative { -fx-background-color: -sica-error-bg; -fx-text-fill: #8F3535; }
+.status-negative .badge-dot { -fx-background-color: -sica-error; }
+.status-neutral { -fx-background-color: -sica-info-bg; -fx-text-fill: #285755; }
+.status-neutral .badge-dot { -fx-background-color: -sica-deep; }
+
+.empty-state { -fx-padding: 21px 15px; }
+.empty-state .muted { -fx-text-alignment: center; }
+.list-row { -fx-padding: 8px 0; -fx-border-color: transparent transparent -sica-rule transparent; }
+
+.dialog-pane.sica-dialog {
+    -fx-padding: 22px;
+    -fx-background-color: -sica-background;
+    -fx-background-radius: 23px;
+    -fx-border-radius: 23px;
+    -fx-border-color: #C4D6C3;
+}
+.sica-dialog > .content { -fx-padding: 0 0 12px 0; }
+.sica-dialog > .button-bar > .container { -fx-padding: 9px 0 0 0; }
+.dialog-title { -fx-font-size: 23px; -fx-font-weight: bold; }
+.drawer-veil { -fx-background-color: rgba(20, 39, 28, .26); }
+.sica-drawer {
+    -fx-padding: 23px;
+    -fx-background-insets: 0;
+    -fx-background-color: -sica-white;
+    -fx-background-radius: 23px 0 0 23px;
+    -fx-effect: dropshadow(gaussian, rgba(19,42,29,.13), 18, .02, -2, 3);
+}
+.drawer-scroll, .drawer-scroll > .viewport { -fx-background-color: transparent; }
+.sica-drawer .muted, .sica-drawer .row-title { -fx-wrap-text: true; }
+.sica-toast {
+    -fx-padding: 14px 20px;
+    -fx-background-color: -sica-white;
+    -fx-background-radius: 14px;
+    -fx-border-color: #D2E5D2;
+    -fx-border-radius: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(19,42,29,.12), 17, .03, 0, 5);
+}
+.company-mark { -fx-min-width: 57px; -fx-min-height: 57px; -fx-max-width: 57px; -fx-max-height: 57px; -fx-background-radius: 16px; }
+.company-sun { -fx-background-color: -sica-lime; }
+.company-moon { -fx-background-color: -sica-aqua; }

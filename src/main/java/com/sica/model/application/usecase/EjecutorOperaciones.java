@@ -7,6 +7,7 @@ import com.sica.model.domain.entity.Usuario;
 import com.sica.model.domain.entity.Empresa;
 import com.sica.model.domain.policy.PoliticaActividadEmpresa;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -38,22 +39,26 @@ public class EjecutorOperaciones {
             String permisoRequerido,
             BiFunction<FabricarRepositorios, Usuario, Resultado> trabajo) {
 
-        if (usuarioId == null) {
-            throw new IllegalArgumentException(
-                    "El usuario que realiza la operación es obligatorio.");
-        }
-
         if (permisoRequerido == null || permisoRequerido.isBlank()) {
-            throw new IllegalArgumentException(
-                    "El permiso requerido es obligatorio.");
+            throw new IllegalArgumentException("El permiso requerido es obligatorio.");
         }
-
-        Objects.requireNonNull(trabajo, "El trabajo a realizar es obligatorio.");
-
-        return conSesion(usuarioId, () -> ejecutarTrabajo(usuarioId, permisoRequerido, trabajo));
+        return ejecutarConPermisos(usuarioId, List.of(permisoRequerido), trabajo);
     }
 
-    private <Resultado> Resultado ejecutarTrabajo(Integer usuarioId, String permisoRequerido,
+    // Agrupa lecturas relacionadas sin abrir otra conexión para cada permiso.
+    <Resultado> Resultado ejecutarConPermisos(Integer usuarioId, List<String> permisos,
+            BiFunction<FabricarRepositorios, Usuario, Resultado> trabajo) {
+        if (usuarioId == null) {
+            throw new IllegalArgumentException("El usuario que realiza la operación es obligatorio.");
+        }
+        if (permisos.isEmpty() || permisos.stream().anyMatch(permiso -> permiso == null || permiso.isBlank())) {
+            throw new IllegalArgumentException("El permiso requerido es obligatorio.");
+        }
+        Objects.requireNonNull(trabajo, "El trabajo a realizar es obligatorio.");
+        return conSesion(usuarioId, () -> ejecutarTrabajo(usuarioId, permisos, trabajo));
+    }
+
+    private <Resultado> Resultado ejecutarTrabajo(Integer usuarioId, List<String> permisos,
             BiFunction<FabricarRepositorios, Usuario, Resultado> trabajo) {
         // El gestor recibe la operación completa para confirmar o deshacer sus cambios.
         return gestorTransacciones.ejecutar(repositorios -> {
@@ -78,12 +83,11 @@ public class EjecutorOperaciones {
             }
 
             // El permiso se consulta en la base de datos a través del repositorio.
-            boolean autorizado = repositorios.crearPermisoRepository()
-                    .tienePermiso(usuario.getRolId(), permisoRequerido);
-
-            if (!autorizado) {
-                throw new SecurityException(
-                        "El usuario no tiene permiso para esta operación.");
+            var permisosDelRol = repositorios.crearPermisoRepository();
+            for (String permiso : permisos) {
+                if (!permisosDelRol.tienePermiso(usuario.getRolId(), permiso)) {
+                    throw new SecurityException("El usuario no tiene permiso para esta operación.");
+                }
             }
 
             // apply ejecuta el trabajo con los repositorios y el usuario comprobado.
